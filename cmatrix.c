@@ -24,7 +24,7 @@ void printCM(int**);
 int **allocBoard(void);
 void restartBoard(int**);
 int **allocCM(void);
-void calcCM(int**,int**,int[],int**);
+void calcCM(int**,int**,int[],int**,int[]);
 
 /* Pieces */
 const char *pText[] = {
@@ -103,13 +103,16 @@ int main ( int argc, char *argv[] )
     int **passedPawns;
     passedPawns = allocBoard();
 
+    // Castles/king moves made?
+    // blackLeft, blackKing, blackRight, whiteLeft, whiteKing, whiteRight
+    int Castling[6] = {0, 0, 0, 0, 0, 0};
     printBoard_num(board);
   //  fprintf(stdout, "\n");
    // printBoard_txt(board);
 
     int **cm;
     cm = allocCM();
-    calcCM(cm, board, promotedPawns, passedPawns);
+    calcCM(cm, board, promotedPawns, passedPawns, Castling);
     //printCM(cm);
 
     clock_t end = clock();
@@ -197,7 +200,7 @@ void usage(char *pname) {
  * no "protection"/"threat".
  */
 
-void calcCM(int **cm, int **b, int sPawns[], int **pPawns) {
+void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
     int i, j;
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
@@ -299,24 +302,8 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns) {
                     }
                 }
             }
-            /* KING */
-            else if (p == 4 || p == 28) {
-                fprintf(stdout, "%d(%s) - King\n", p, pText[p]);
-                // Castling and hindered moves are not considered
-                int m, n;
-                for (n = j-1; n <= j+1; n++) {
-                    for (m = i-1; m <= i+1; m++) {
-                        if (n < 0 || n > 7 || m < 0 || m > 7)
-                            continue;
-                        if (n == j && m == i)
-                            continue;
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
-                    }
-                }
-            }
             /* QUEEN */
-            else if (p == 5 || p == 29) {
+            else if (p == 4 || p == 28) {
                 fprintf(stdout, "%d(%s) - Queen\n", p, pText[p]);
                 int m, n;
                 // Calculate possible moves
@@ -432,6 +419,70 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns) {
                         cm[p][pPawns[i-1][j+1]] = 1;
                     }
                 }
+            }
+            /* KING */
+            else if (p == 5 || p == 29) {
+                fprintf(stdout, "%d(%s) - King\n", p, pText[p]);
+                int m, n;
+                for (n = j-1; n <= j+1; n++) {
+                    for (m = i-1; m <= i+1; m++) {
+                        if (n < 0 || n > 7 || m < 0 || m > 7)
+                            continue;
+                        if (n == j && m == i)
+                            continue;
+                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        cm[p][b[m][n]] = 1;
+                    }
+                }
+                // Castling TODO: check spaces are free of threat
+                if (p == 5) {
+                    int is_check = 0;
+                    int s;
+                    for (s = 17; s <= 32; s++) {
+                        if (cm[s][p]) {
+                            is_check = 1;
+                            break;
+                        }
+                    }
+                    fprintf(stdout, "King 5 is in check? %d\n", is_check);
+                    if (Castling[1] != 1 && is_check != 1) {
+                        // Long black castling
+                        if (Castling[0] != 1 && b[0][1]+b[0][2]+b[0][3] == 0) {
+                            // YES
+                            continue;
+                        }
+                        // Short black castling possible
+                        if (Castling[2] != 1 && b[0][5]+b[0][6] == 0) {
+                            // YES
+                            continue;
+                        }
+                    }
+                } else {
+                    int is_check = 0;
+                    int s;
+                    for (s = 17; s <= 32; s++) {
+                        if (cm[p][s]) {
+                            is_check = 1;
+                            break;
+                        }
+                    }
+                    fprintf(stdout, "King 5 is in check? %d\n", is_check);
+                    if (Castling[4] != 1 && is_check != 1) {
+                        // Long white castling
+                        if (Castling[3] != 1 && b[7][1]+b[7][2]+b[7][3] == 0) {
+                            // YES
+                            continue;
+                        }
+                        // Short white castling
+                        if (Castling[5] != 1 && b[7][5]+b[7][6] == 0) {
+                            // YES
+                            continue;
+                        }
+                    }
+                }
+                // Hindered moves!! TODO: King is in contact with a pieace of the
+                // same colour only if that other piece is either not under threat
+                // at all or under threat of only one enemy
             }
         }
     }
