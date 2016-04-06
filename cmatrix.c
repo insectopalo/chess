@@ -244,6 +244,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else 
                             cm[p][b[i][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 1 || p == 8)
+                            bAccessible[i][n]++;
+                        else
+                            wAccessible[i][n]++;
                     }
                 }
                 // 2) right
@@ -255,6 +261,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else 
                             cm[p][b[i][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 1 || p == 8)
+                            bAccessible[i][n]++;
+                        else
+                            wAccessible[i][n]++;
                     }
                 }
                 // 3) up
@@ -266,6 +278,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else 
                             cm[p][b[n][j]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 1 || p == 8)
+                            bAccessible[n][j]++;
+                        else
+                            wAccessible[n][j]++;
                     }
                 }
                 // 4) down
@@ -277,6 +295,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else 
                             cm[p][b[n][j]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 1 || p == 8)
+                            bAccessible[n][j]++;
+                        else
+                            wAccessible[n][j]++;
                     }
                 }
             }
@@ -297,6 +321,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                             cm[p2][b[x][y]] = 1;
                         else
                             cm[p][b[x][y]] = 1;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 2 || p == 7)
+                            bAccessible[x][y]++;
+                        else
+                            wAccessible[x][y]++;
                     }
                 }
             }
@@ -313,6 +343,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 3 || p == 6)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
                 // 2) up right
@@ -324,6 +360,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 3 || p == 6)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
                 // 3) down left
@@ -335,6 +377,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 3 || p == 6)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
                 // 4) down right
@@ -346,6 +394,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 3 || p == 6)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
             }
@@ -363,6 +417,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[i][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[i][n]++;
+                        else
+                            wAccessible[i][n]++;
                     }
                 }
                 // 2) right
@@ -374,6 +434,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[i][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[i][n]++;
+                        else
+                            wAccessible[i][n]++;
                     }
                 }
                 // 3) up
@@ -385,6 +451,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[n][j]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[n][j]++;
+                        else
+                            wAccessible[n][j]++;
                     }
                 }
                 // 4) down
@@ -396,6 +468,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[n][j]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[n][j]++;
+                        else
+                            wAccessible[n][j]++;
                     }
                 }
                 // 5) up left
@@ -407,6 +485,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
                 // 6) up right
@@ -418,6 +502,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
                 // 7) down left
@@ -429,6 +519,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
                 // 8) down right
@@ -440,6 +536,12 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         else
                             cm[p][b[m][n]] = 1;
                         break;
+                    } else {
+                        // Space accessible but empty
+                        if (p == 4)
+                            bAccessible[m][n]++;
+                        else
+                            wAccessible[m][n]++;
                     }
                 }
             }
@@ -450,6 +552,9 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                     if (b[i+1][j-1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i+1][j-1], pText[b[i+1][j-1]], i+1, j-1);
                         cm[p][b[i+1][j-1]] = 1;
+                    } else {
+                        // Space accessible but empty
+                        bAccessible[i+1][j-1]++;
                     }
                     if (pPawns[i+1][j-1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i+1][j-1], pText[pPawns[i+1][j-1]], i+1, j-1);
@@ -460,6 +565,9 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                     if (b[i+1][j+1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i+1][j+1], pText[b[i+1][j+1]], i+1, j+1);
                         cm[p][b[i+1][j+1]] = 1;
+                    } else {
+                        // Space accessible but empty
+                        bAccessible[i+1][j+1]++;
                     }
                     if (pPawns[i+1][j+1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i+1][j+1], pText[pPawns[i+1][j+1]], i+1, j+1);
@@ -474,6 +582,9 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                     if (b[i-1][j-1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i-1][j-1], pText[b[i-1][j-1]], i-1, j-1);
                         cm[p][b[i-1][j-1]] = 1;
+                    } else {
+                        // Space accessible but empty
+                        wAccessible[i-1][j-1]++;
                     }
                     if (pPawns[i-1][j-1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i-1][j-1], pText[pPawns[i-1][j-1]], i-1, j-1);
@@ -484,6 +595,9 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                     if (b[i-1][j+1]) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i-1][j+1], pText[b[i-1][j+1]], i-1, j+1);
                         cm[p][b[i-1][j+1]] = 1;
+                    } else {
+                        // Space accessible but empty
+                        wAccessible[i-1][j+1]++;
                     }
                     if (pPawns[i-1][j+1]) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i-1][j+1], pText[pPawns[i-1][j+1]], i-1, j+1);
@@ -501,14 +615,24 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                             continue;
                         if (n == j && m == i)
                             continue;
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        if ( isPromoted )
-                            cm[p2][b[m][n]] = 1;
-                        else
-                            cm[p][b[m][n]] = 1;
+                        if (b[m][n] != 0) {
+                            fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                            if ( isPromoted )
+                                cm[p2][b[m][n]] = 1;
+                            else
+                                cm[p][b[m][n]] = 1;
+                            break;
+                        } else {
+                            // Space accessible but empty
+                            if (p == 5)
+                                bAccessible[m][n]++;
+                            else
+                                wAccessible[m][n]++;
+                        }
                     }
                 }
-                // Castling TODO: check spaces are free of threat
+                // Castling TODO: check spaces are free of threat: now easy to do with the new bAccessible
+                // and wAccessible matrices :)
                 if (p == 5) {
                     int is_check = 0;
                     int s;
