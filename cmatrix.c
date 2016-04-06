@@ -106,9 +106,18 @@ int main ( int argc, char *argv[] )
     // Castles/king moves made?
     // blackLeft, blackKing, blackRight, whiteLeft, whiteKing, whiteRight
     int Castling[6] = {0, 0, 0, 0, 0, 0};
+
+    // NOTES FOR MOVES
+    // Remember to update the promotedPawns if a pawn is promoted. Choose the numbers
+    // corresponding to the appropriate colour, and any of the sides.
+    // Also, remember to upgrade the Castling array with values of 1 when castles or
+    // king move. Also when Castling!
+    // Last, remember to tag the passedPawns when pawns move long :) and then clean it
+    // in the next turn resetting to 0
+
     printBoard_num(board);
-  //  fprintf(stdout, "\n");
-   // printBoard_txt(board);
+    // fprintf(stdout, "\n");
+    // printBoard_txt(board);
 
     int **cm;
     cm = allocCM();
@@ -201,14 +210,25 @@ void usage(char *pname) {
  */
 
 void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
+    int wAccessible[8][8];
+    int bAccessible[8][8];
     int i, j;
     for (i = 0; i < 8; i++) {
+        for ( j = 0; j < 8; j++) {
+            wAccessible[i][j] = 0;
+            bAccessible[i][j] = 0;
+        }
+    }
+    for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
-            int p;
-            p = b[i][j]; // Get type of piece
+            int p, p2;
+            p = b[i][j];  // Get type of piece
+            p2 = b[i][j]; // Get type of piece, used only in case of promoted Pawns
             //fprintf(stdout,"%d: ", p);
+            int isPromoted = 0;
             if (sPawns[p] != 0) { // Correct type of piece for upgraded pawns
                 p = sPawns[p];
+                isPromoted = 1;
             }
             /* CASTLE */
             if (p == 1 || p == 8 || p == 25 || p == 32) {
@@ -219,7 +239,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j-1; n >= 0; n--) {
                     if (b[i][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
-                        cm[p][b[i][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[i][n]] = 1;
+                        else 
+                            cm[p][b[i][n]] = 1;
                         break;
                     }
                 }
@@ -227,7 +250,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j+1; n < 8; n++) {
                     if (b[i][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
-                        cm[p][b[i][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[i][n]] = 1;
+                        else 
+                            cm[p][b[i][n]] = 1;
                         break;
                     }
                 }
@@ -235,7 +261,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = i-1; n >= 0; n--) {
                     if (b[n][j] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
-                        cm[p][b[n][j]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[n][j]] = 1;
+                        else 
+                            cm[p][b[n][j]] = 1;
                         break;
                     }
                 }
@@ -243,7 +272,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = i+1; n < 8; n++) {
                     if (b[n][j] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
-                        cm[p][b[n][j]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[n][j]] = 1;
+                        else 
+                            cm[p][b[n][j]] = 1;
                         break;
                     }
                 }
@@ -261,7 +293,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                     }
                     if (b[x][y] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[x][y], pText[b[x][y]], x, y);
-                        cm[p][b[x][y]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[x][y]] = 1;
+                        else
+                            cm[p][b[x][y]] = 1;
                     }
                 }
             }
@@ -273,7 +308,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j-1, m = i-1; n >= 0 && m >= 0; n--, m--) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -281,7 +319,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j+1, m = i-1; n < 8 && m >= 0; n++, m--) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -289,7 +330,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j-1, m = i+1; n >= 0 && m < 8; n--, m++) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -297,7 +341,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j+1, m = i+1; n < 8 && m < 8; n++, m++) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -311,7 +358,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j-1; n >= 0; n--) {
                     if (b[i][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
-                        cm[p][b[i][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[i][n]] = 1;
+                        else
+                            cm[p][b[i][n]] = 1;
                         break;
                     }
                 }
@@ -319,7 +369,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j+1; n < 8; n++) {
                     if (b[i][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
-                        cm[p][b[i][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[i][n]] = 1;
+                        else
+                            cm[p][b[i][n]] = 1;
                         break;
                     }
                 }
@@ -327,7 +380,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = i-1; n >= 0; n--) {
                     if (b[n][j] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
-                        cm[p][b[n][j]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[n][j]] = 1;
+                        else
+                            cm[p][b[n][j]] = 1;
                         break;
                     }
                 }
@@ -335,7 +391,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = i+1; n < 8; n++) {
                     if (b[n][j] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
-                        cm[p][b[n][j]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[n][j]] = 1;
+                        else
+                            cm[p][b[n][j]] = 1;
                         break;
                     }
                 }
@@ -343,7 +402,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j-1, m = i-1; n >= 0 && m >= 0; n--, m--) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -351,7 +413,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j+1, m = i-1; n < 8 && m >= 0; n++, m--) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -359,7 +424,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j-1, m = i+1; n >= 0 && m < 8; n--, m++) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -367,7 +435,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 for (n = j+1, m = i+1; n < 8 && m < 8; n++, m++) {
                     if (b[m][n] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                         break;
                     }
                 }
@@ -431,7 +502,10 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                         if (n == j && m == i)
                             continue;
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                        cm[p][b[m][n]] = 1;
+                        if ( isPromoted )
+                            cm[p2][b[m][n]] = 1;
+                        else
+                            cm[p][b[m][n]] = 1;
                     }
                 }
                 // Castling TODO: check spaces are free of threat
