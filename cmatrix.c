@@ -29,10 +29,10 @@ void calcCM(int**,int**,int[],int**,int[]);
 /* Pieces */
 const char *pText[] = {
     "   ",
-    "RLb", "BLb", "NLb", "Kb ",  "Qb ",  "NRb", "BRb", "RRb",
+    "RLb", "BLb", "NLb", "Qb ",  "Kb ",  "NRb", "BRb", "RRb",
     "p8b", "p7b", "p6b", "p5b", "p4b", "p3b", "p2b", "p1b",
     "p1w", "p2w", "p3w", "p4w", "p5w", "p6w", "p7w", "p8w",
-    "RLw", "BLw", "NLw", "Kw ",  "Qw ",  "NRw", "BRw", "RRw"
+    "RLw", "BLw", "NLw", "Qw ",  "Kw ",  "NRw", "BRw", "RRw"
 };
 
 /* Main */
@@ -122,7 +122,7 @@ int main ( int argc, char *argv[] )
     int **cm;
     cm = allocCM();
     calcCM(cm, board, promotedPawns, passedPawns, Castling);
-    //printCM(cm);
+    printCM(cm);
 
     clock_t end = clock();
     //fprintf(stderr, "Time elapsed = %d (%.3f secs)\n", (int) (end - start), (float) (end - start) / CLOCKS_PER_SEC);
@@ -232,7 +232,7 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
             }
             /* CASTLE */
             if (p == 1 || p == 8 || p == 25 || p == 32) {
-                fprintf(stdout, "%d(%s) - Castle\n", p, pText[p]);
+                fprintf(stdout, "%d(%s) - Castle in position %d:%d\n", p, pText[p], i, j);
                 int n;
                 // Calculate possible moves
                 // 1) left
@@ -306,7 +306,7 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
             }
             /* KNIGHT */
             else if (p == 2 || p == 7 || p == 26 || p == 31) {
-                fprintf(stdout, "%d(%s) - Knight\n", p, pText[p]);
+                fprintf(stdout, "%d(%s) - Knight in position %d:%d\n", p, pText[p], i, j);
                 int K_moves[8][2] = { {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1} };
                 int n;
                 for (n = 0; n < 8; n++ ) {
@@ -332,7 +332,7 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
             }
             /* BISHOP */
             else if (p == 3 || p == 6 || p == 27 || p == 30){
-                fprintf(stdout, "%d(%s) - Bishop\n", p, pText[p]);
+                fprintf(stdout, "%d(%s) - Bishop in position %d:%d\n", p, pText[p], i, j);
                 int m, n;
                 // 1) up left
                 for (n = j-1, m = i-1; n >= 0 && m >= 0; n--, m--) {
@@ -405,7 +405,7 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
             }
             /* QUEEN */
             else if (p == 4 || p == 28) {
-                fprintf(stdout, "%d(%s) - Queen\n", p, pText[p]);
+                fprintf(stdout, "%d(%s) - Queen in position %d:%d\n", p, pText[p], i, j);
                 int m, n;
                 // Calculate possible moves
                 // 1) left
@@ -546,8 +546,8 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 }
             }
             /* BLACK PAWN */
-            else if (p >= 9 && p <= 14) {
-                fprintf(stdout, "%d(%s) - Black pawn\n", p, pText[p]);
+            else if (p >= 9 && p <= 16) {
+                fprintf(stdout, "%d(%s) - Black pawn in position %d:%d\n", p, pText[p], i, j);
                 if (i+1 < 8 && j-1 >=0) {
                     if (b[i+1][j-1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i+1][j-1], pText[b[i+1][j-1]], i+1, j-1);
@@ -576,8 +576,8 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 }
             }
             /* WHITE PAWN */
-            else if (p >= 9 && p <= 14) {
-                fprintf(stdout, "%d(%s) - White pawn\n", p, pText[p]);
+            else if (p >= 17 && p <= 24) {
+                fprintf(stdout, "%d(%s) - White pawn in position %d:%d\n", p, pText[p], i, j);
                 if (i-1 >= 0 && j-1 >=0) {
                     if (b[i-1][j-1] != 0) {
                         fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i-1][j-1], pText[b[i-1][j-1]], i-1, j-1);
@@ -607,22 +607,27 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
             }
             /* KING */
             else if (p == 5 || p == 29) {
-                fprintf(stdout, "%d(%s) - King\n", p, pText[p]);
+                fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
                 int m, n;
                 for (n = j-1; n <= j+1; n++) {
                     for (m = i-1; m <= i+1; m++) {
-                        if (n < 0 || n > 7 || m < 0 || m > 7)
+                        //fprintf(stdout, " KING: checking position %d:%d\n", m, n);
+                        if (n < 0 || n > 7 || m < 0 || m > 7) {
+                            fprintf(stdout, "       out of board\n");
                             continue;
-                        if (n == j && m == i)
+                        }
+                        if (n == j && m == i) {
+                            //fprintf(stdout, "       the king is there\n");
                             continue;
+                        }
                         if (b[m][n] != 0) {
                             fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                             if ( isPromoted )
                                 cm[p2][b[m][n]] = 1;
                             else
                                 cm[p][b[m][n]] = 1;
-                            break;
                         } else {
+                            //fprintf(stdout, " Space accessible but empty\n");
                             // Space accessible but empty
                             if (p == 5)
                                 bAccessible[m][n]++;
@@ -633,16 +638,19 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 }
                 // Castling TODO: check spaces are free of threat: now easy to do with the new bAccessible
                 // and wAccessible matrices :)
+                // Also TODO is to transfer the KING to the end of the CM construction, out of this loop,
+                // since it needs to know the enemies pieces accessible area to know if it can castle
                 if (p == 5) {
                     int is_check = 0;
                     int s;
                     for (s = 17; s <= 32; s++) {
                         if (cm[s][p]) {
+                            fprintf(stdout, " King %d is under check by %d\n", p, s);
                             is_check = 1;
                             break;
                         }
                     }
-                    fprintf(stdout, "King 5 is in check? %d\n", is_check);
+                    fprintf(stdout, " King %d is in check? %d\n", p, is_check);
                     if (Castling[1] != 1 && is_check != 1) {
                         // Long black castling
                         if (Castling[0] != 1 && b[0][1]+b[0][2]+b[0][3] == 0) {
@@ -658,13 +666,14 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                 } else {
                     int is_check = 0;
                     int s;
-                    for (s = 17; s <= 32; s++) {
+                    for (s = 9; s <= 16; s++) {
                         if (cm[p][s]) {
+                            fprintf(stdout, " King %d is under check by %d\n", p, s);
                             is_check = 1;
                             break;
                         }
                     }
-                    fprintf(stdout, "King 5 is in check? %d\n", is_check);
+                    fprintf(stdout, " King %d is in check? %d\n", p, is_check);
                     if (Castling[4] != 1 && is_check != 1) {
                         // Long white castling
                         if (Castling[3] != 1 && b[7][1]+b[7][2]+b[7][3] == 0) {
@@ -720,9 +729,13 @@ void printBoard_txt(int **b) {
 
 void printCM(int **cm) {
     int i, j;
+    fprintf(stdout, "   ");
+    for (i = 1; i < 33; i++) fprintf(stdout, "%2d ", i);
+    fprintf(stdout, "\n");
     for (i = 1; i < 33; i++) {
+        fprintf(stdout, "%2d ", i);
         for (j = 1; j < 33; j++) {
-            fprintf(stdout, "%d ", cm[i][j]);
+            fprintf(stdout, "%2d ", cm[i][j]);
         }
         fprintf(stdout, "\n");
     }
