@@ -23,8 +23,9 @@ void printBoard_txt(int**);
 void printCM(int**);
 int **allocBoard(void);
 void restartBoard(int**);
+/* Allocates and initialises to 0 a 8x8 matrix. Returns the pointer */
 int **allocCM(void);
-void calcCM(int**,int**,int[],int**,int[]);
+void calcCM(int**,int**,int**,int**,int[],int**,int[]);
 
 /* Pieces */
 const char *pText[] = {
@@ -119,9 +120,15 @@ int main ( int argc, char *argv[] )
     // fprintf(stdout, "\n");
     // printBoard_txt(board);
 
+    /* Alloc and init the matrices of accessibility */
+    int **wAccessible;
+    int **bAccessible;
+    wAccessible = allocBoard();
+    bAccessible = allocBoard();
+
     int **cm;
     cm = allocCM();
-    calcCM(cm, board, promotedPawns, passedPawns, Castling);
+    calcCM(cm, bAccessible, wAccessible, board, promotedPawns, passedPawns, Castling);
     printCM(cm);
 
     clock_t end = clock();
@@ -209,19 +216,13 @@ void usage(char *pname) {
  * no "protection"/"threat".
  */
 
-void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
-    int wAccessible[8][8];
-    int bAccessible[8][8];
+void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[], int **pPawns, int Castling[]) {
+    int bKing[2] = {-1, -1};
+    int wKing[2] = {-1, -1};
+    int p, p2;
     int i, j;
     for (i = 0; i < 8; i++) {
-        for ( j = 0; j < 8; j++) {
-            wAccessible[i][j] = 0;
-            bAccessible[i][j] = 0;
-        }
-    }
-    for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
-            int p, p2;
             p = b[i][j];  // Get type of piece
             p2 = b[i][j]; // Get type of piece, used only in case of promoted Pawns
             //fprintf(stdout,"%d: ", p);
@@ -605,94 +606,133 @@ void calcCM(int **cm, int **b, int sPawns[], int **pPawns, int Castling[]) {
                     }
                 }
             }
-            /* KING */
-            else if (p == 5 || p == 29) {
-                fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
-                int m, n;
-                for (n = j-1; n <= j+1; n++) {
-                    for (m = i-1; m <= i+1; m++) {
-                        //fprintf(stdout, " KING: checking position %d:%d\n", m, n);
-                        if (n < 0 || n > 7 || m < 0 || m > 7) {
-                            fprintf(stdout, "       out of board\n");
-                            continue;
-                        }
-                        if (n == j && m == i) {
-                            //fprintf(stdout, "       the king is there\n");
-                            continue;
-                        }
-                        if (b[m][n] != 0) {
-                            fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
-                            if ( isPromoted )
-                                cm[p2][b[m][n]] = 1;
-                            else
-                                cm[p][b[m][n]] = 1;
-                        } else {
-                            //fprintf(stdout, " Space accessible but empty\n");
-                            // Space accessible but empty
-                            if (p == 5)
-                                bAccessible[m][n]++;
-                            else
-                                wAccessible[m][n]++;
-                        }
-                    }
-                }
-                // Castling TODO: check spaces are free of threat: now easy to do with the new bAccessible
-                // and wAccessible matrices :)
-                // Also TODO is to transfer the KING to the end of the CM construction, out of this loop,
-                // since it needs to know the enemies pieces accessible area to know if it can castle
-                if (p == 5) {
-                    int is_check = 0;
-                    int s;
-                    for (s = 17; s <= 32; s++) {
-                        if (cm[s][p]) {
-                            fprintf(stdout, " King %d is under check by %d\n", p, s);
-                            is_check = 1;
-                            break;
-                        }
-                    }
-                    fprintf(stdout, " King %d is in check? %d\n", p, is_check);
-                    if (Castling[1] != 1 && is_check != 1) {
-                        // Long black castling
-                        if (Castling[0] != 1 && b[0][1]+b[0][2]+b[0][3] == 0) {
-                            // YES
-                            continue;
-                        }
-                        // Short black castling possible
-                        if (Castling[2] != 1 && b[0][5]+b[0][6] == 0) {
-                            // YES
-                            continue;
-                        }
-                    }
-                } else {
-                    int is_check = 0;
-                    int s;
-                    for (s = 9; s <= 16; s++) {
-                        if (cm[p][s]) {
-                            fprintf(stdout, " King %d is under check by %d\n", p, s);
-                            is_check = 1;
-                            break;
-                        }
-                    }
-                    fprintf(stdout, " King %d is in check? %d\n", p, is_check);
-                    if (Castling[4] != 1 && is_check != 1) {
-                        // Long white castling
-                        if (Castling[3] != 1 && b[7][1]+b[7][2]+b[7][3] == 0) {
-                            // YES
-                            continue;
-                        }
-                        // Short white castling
-                        if (Castling[5] != 1 && b[7][5]+b[7][6] == 0) {
-                            // YES
-                            continue;
-                        }
-                    }
-                }
-                // Hindered moves!! TODO: King is in contact with a pieace of the
-                // same colour only if that other piece is either not under threat
-                // at all or under threat of only one enemy
+            else if (p == 5) {
+                bKing[0] = i;
+                bKing[1] = j;
+            }
+            else if (p == 29) {
+                wKing[0] = i;
+                wKing[1] = j;
             }
         }
     }
+
+    // Check the Kings now
+    int m, n;
+    int is_check;
+    int s;
+
+    /* BLACK KING */
+    p = 5;
+    i = bKing[0];
+    j = bKing[1];
+    fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
+    for (n = j-1; n <= j+1; n++) {
+        for (m = i-1; m <= i+1; m++) {
+            //fprintf(stdout, " KING: checking position %d:%d\n", m, n);
+            if (n < 0 || n > 7 || m < 0 || m > 7) {
+                //fprintf(stdout, "       out of board\n");
+                continue;
+            }
+            if (n == j && m == i) {
+                //fprintf(stdout, "       the king is there\n");
+                continue;
+            }
+            if (wAccessible[m][n]) {
+                //fprintf(stdout, "       threaten by enemies\n");
+                continue;
+            }
+            if (b[m][n] != 0) {
+                fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                cm[p][b[m][n]] = 1;
+            }
+            else {
+                //fprintf(stdout, " Space accessible but empty\n");
+                // Space accessible but empty
+                if (p == 5)
+                    bAccessible[m][n]++;
+                else
+                    wAccessible[m][n]++;
+            }
+        }
+    }
+    is_check = 0;
+    for (s = 17; s <= 32; s++) {
+        if (cm[s][p]) {
+            fprintf(stdout, " King %d is under check by %d\n", p, s);
+            is_check = 1;
+            break;
+        }
+    }
+
+    /* This castlilng works, but not needed for CM
+     * if (Castling[1] != 1 && is_check != 1) {
+     *     // Long black castling
+     *     if (Castling[0] != 1 && b[0][1]+b[0][2]+b[0][3] == 0 && wAccessible[0][1]+wAccessible[0][2]+wAccessbile[0][3]) {
+     *         // Update CM if required
+     *     }
+     *     // Short black castling possible
+     *     if (Castling[2] != 1 && b[0][5]+b[0][6] == 0 && wAccessible[0][5]+wAccessible[0][6]) {
+     *         // Update CM if required
+     *     }
+     * }
+     */
+
+    /* WHITE KING */
+    p = 29;
+    i = wKing[0];
+    j = wKing[1];
+    fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
+    for (n = j-1; n <= j+1; n++) {
+        for (m = i-1; m <= i+1; m++) {
+            //fprintf(stdout, " KING: checking position %d:%d\n", m, n);
+            if (n < 0 || n > 7 || m < 0 || m > 7) {
+                //fprintf(stdout, "       out of board\n");
+                continue;
+            }
+            if (n == j && m == i) {
+                //fprintf(stdout, "       the king is there\n");
+                continue;
+            }
+            if (bAccessible[m][n]) {
+                //fprintf(stdout, "       threaten by enemies\n");
+                continue;
+            }
+            if (b[m][n] != 0) {
+                fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                cm[p][b[m][n]] = 1;
+            }
+            else {
+                //fprintf(stdout, " Space accessible but empty\n");
+                // Space accessible but empty
+                if (p == 5)
+                    bAccessible[m][n]++;
+                else
+                    wAccessible[m][n]++;
+            }
+        }
+    }
+    is_check = 0;
+    for (s = 9; s <= 16; s++) {
+        if (cm[p][s]) {
+            fprintf(stdout, " King %d is under check by %d\n", p, s);
+            is_check = 1;
+            break;
+        }
+    }
+
+    /* This castling works, but not needed for CM
+     * if (Castling[4] != 1 && is_check != 1) {
+     *     // Long white castling
+     *     if (Castling[3] != 1 && b[7][1]+b[7][2]+b[7][3] == 0) {
+     *         // TODO: update CM
+     *     }
+     *     // Short white castling
+     *     if (Castling[5] != 1 && b[7][5]+b[7][6] == 0) {
+     *         // TODO: update CM
+     *     }
+     * }
+     */
 }
 
 void printBoard_num(int **b) {
