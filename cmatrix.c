@@ -84,6 +84,18 @@ int main ( int argc, char *argv[] )
         usage(argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    if (globalArgs.inFileName == NULL) {
+        fprintf(stderr, "No input file specified in the -i flag. See -h for help.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    FILE *inputF;
+    inputF = fopen(globalArgs.inFileName,"r");
+    if (inputF == NULL){
+        fprintf(stderr, "Could not open %s for reading\n", globalArgs.inFileName);
+        exit(EXIT_FAILURE);
+    }
     
     /*********************/
     /* Declare variables */
@@ -108,14 +120,6 @@ int main ( int argc, char *argv[] )
     // blackLeft, blackKing, blackRight, whiteLeft, whiteKing, whiteRight
     int Castling[6] = {0, 0, 0, 0, 0, 0};
 
-    // NOTES FOR MOVES
-    // Remember to update the promotedPawns if a pawn is promoted. Choose the numbers
-    // corresponding to the appropriate colour, and any of the sides.
-    // Also, remember to upgrade the Castling array with values of 1 when castles or
-    // king move. Also when Castling!
-    // Last, remember to tag the passedPawns when pawns move long :) and then clean it
-    // in the next turn resetting to 0
-
     printBoard_num(board);
     // fprintf(stdout, "\n");
     // printBoard_txt(board);
@@ -131,8 +135,33 @@ int main ( int argc, char *argv[] )
     calcCM(cm, bAccessible, wAccessible, board, promotedPawns, passedPawns, Castling);
     printCM(cm);
 
+    // NOTES FOR MOVES
+    // Remember to update the promotedPawns if a pawn is promoted. Choose the numbers
+    // corresponding to the appropriate colour, and any of the sides.
+    // Also, remember to upgrade the Castling array with values of 1 when castles or
+    // king move. Also when Castling!
+    // Last, remember to tag the passedPawns when pawns move long :) and then clean it
+    // in the next turn resetting to 0
+
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    while ((read = getline(&line, &len, inputF)) != -1) {
+        //if (strcmp(line, "[") == 0) {
+        if (strncmp(line, "[", 1) == 0) {
+            continue;
+        }
+        fprintf(stdout, "%s", line);
+    }
+
+    free(line);
+    fclose(inputF);
+
+    // TODO free the allocated memroy
+
     clock_t end = clock();
     //fprintf(stderr, "Time elapsed = %d (%.3f secs)\n", (int) (end - start), (float) (end - start) / CLOCKS_PER_SEC);
+
 }
 
 int **allocBoard(void) {
@@ -203,7 +232,7 @@ void restartBoard(int **b) {
 
 void usage(char *pname) {
     fprintf(stderr, "%s -i <file.pgn> [OPTIONS]\n", pname);
-    fprintf(stderr, "  -s       PGN input file to parse\n"
+    fprintf(stderr, "  -i       PGN input file to parse\n"
                     "  -v       Prints heaps of useless stuff. Mainly for debugging\n"
                     "  -h       Prints (this) help message\n");
 }
@@ -233,13 +262,13 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
             }
             /* CASTLE */
             if (p == 1 || p == 8 || p == 25 || p == 32) {
-                fprintf(stdout, "%d(%s) - Castle in position %d:%d\n", p, pText[p], i, j);
+                if (globalArgs.verbose) fprintf(stdout, "%d(%s) - Castle in position %d:%d\n", p, pText[p], i, j);
                 int n;
                 // Calculate possible moves
                 // 1) left
                 for (n = j-1; n >= 0; n--) {
                     if (b[i][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
                         if ( isPromoted )
                             cm[p2][b[i][n]] = 1;
                         else 
@@ -256,7 +285,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 2) right
                 for (n = j+1; n < 8; n++) {
                     if (b[i][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
                         if ( isPromoted )
                             cm[p2][b[i][n]] = 1;
                         else 
@@ -273,7 +302,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 3) up
                 for (n = i-1; n >= 0; n--) {
                     if (b[n][j] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
                         if ( isPromoted )
                             cm[p2][b[n][j]] = 1;
                         else 
@@ -290,7 +319,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 4) down
                 for (n = i+1; n < 8; n++) {
                     if (b[n][j] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
                         if ( isPromoted )
                             cm[p2][b[n][j]] = 1;
                         else 
@@ -307,7 +336,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
             }
             /* KNIGHT */
             else if (p == 2 || p == 7 || p == 26 || p == 31) {
-                fprintf(stdout, "%d(%s) - Knight in position %d:%d\n", p, pText[p], i, j);
+                if (globalArgs.verbose) fprintf(stdout, "%d(%s) - Knight in position %d:%d\n", p, pText[p], i, j);
                 int K_moves[8][2] = { {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1} };
                 int n;
                 for (n = 0; n < 8; n++ ) {
@@ -317,7 +346,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                         continue;
                     }
                     if (b[x][y] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[x][y], pText[b[x][y]], x, y);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[x][y], pText[b[x][y]], x, y);
                         if ( isPromoted )
                             cm[p2][b[x][y]] = 1;
                         else
@@ -333,12 +362,12 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
             }
             /* BISHOP */
             else if (p == 3 || p == 6 || p == 27 || p == 30){
-                fprintf(stdout, "%d(%s) - Bishop in position %d:%d\n", p, pText[p], i, j);
+                if (globalArgs.verbose) fprintf(stdout, "%d(%s) - Bishop in position %d:%d\n", p, pText[p], i, j);
                 int m, n;
                 // 1) up left
                 for (n = j-1, m = i-1; n >= 0 && m >= 0; n--, m--) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -355,7 +384,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 2) up right
                 for (n = j+1, m = i-1; n < 8 && m >= 0; n++, m--) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -372,7 +401,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 3) down left
                 for (n = j-1, m = i+1; n >= 0 && m < 8; n--, m++) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -389,7 +418,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 4) down right
                 for (n = j+1, m = i+1; n < 8 && m < 8; n++, m++) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -406,13 +435,13 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
             }
             /* QUEEN */
             else if (p == 4 || p == 28) {
-                fprintf(stdout, "%d(%s) - Queen in position %d:%d\n", p, pText[p], i, j);
+                if (globalArgs.verbose) fprintf(stdout, "%d(%s) - Queen in position %d:%d\n", p, pText[p], i, j);
                 int m, n;
                 // Calculate possible moves
                 // 1) left
                 for (n = j-1; n >= 0; n--) {
                     if (b[i][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
                         if ( isPromoted )
                             cm[p2][b[i][n]] = 1;
                         else
@@ -429,7 +458,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 2) right
                 for (n = j+1; n < 8; n++) {
                     if (b[i][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i][n], pText[b[i][n]], i, n);
                         if ( isPromoted )
                             cm[p2][b[i][n]] = 1;
                         else
@@ -446,7 +475,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 3) up
                 for (n = i-1; n >= 0; n--) {
                     if (b[n][j] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
                         if ( isPromoted )
                             cm[p2][b[n][j]] = 1;
                         else
@@ -463,7 +492,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 4) down
                 for (n = i+1; n < 8; n++) {
                     if (b[n][j] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[n][j], pText[b[n][j]], n, j);
                         if ( isPromoted )
                             cm[p2][b[n][j]] = 1;
                         else
@@ -480,7 +509,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 5) up left
                 for (n = j-1, m = i-1; n >= 0 && m >= 0; n--, m--) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -497,7 +526,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 6) up right
                 for (n = j+1, m = i-1; n < 8 && m >= 0; n++, m--) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -514,7 +543,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 7) down left
                 for (n = j-1, m = i+1; n >= 0 && m < 8; n--, m++) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -531,7 +560,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 // 8) down right
                 for (n = j+1, m = i+1; n < 8 && m < 8; n++, m++) {
                     if (b[m][n] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                         if ( isPromoted )
                             cm[p2][b[m][n]] = 1;
                         else
@@ -548,60 +577,60 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
             }
             /* BLACK PAWN */
             else if (p >= 9 && p <= 16) {
-                fprintf(stdout, "%d(%s) - Black pawn in position %d:%d\n", p, pText[p], i, j);
+                if (globalArgs.verbose) fprintf(stdout, "%d(%s) - Black pawn in position %d:%d\n", p, pText[p], i, j);
                 if (i+1 < 8 && j-1 >=0) {
                     if (b[i+1][j-1] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i+1][j-1], pText[b[i+1][j-1]], i+1, j-1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i+1][j-1], pText[b[i+1][j-1]], i+1, j-1);
                         cm[p][b[i+1][j-1]] = 1;
                     } else {
                         // Space accessible but empty
                         bAccessible[i+1][j-1]++;
                     }
                     if (pPawns[i+1][j-1] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i+1][j-1], pText[pPawns[i+1][j-1]], i+1, j-1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i+1][j-1], pText[pPawns[i+1][j-1]], i+1, j-1);
                         cm[p][pPawns[i+1][j-1]] = 1;
                     }
                 }
                 if (i+1 < 8 && j+1 < 8) {
                     if (b[i+1][j+1] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i+1][j+1], pText[b[i+1][j+1]], i+1, j+1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i+1][j+1], pText[b[i+1][j+1]], i+1, j+1);
                         cm[p][b[i+1][j+1]] = 1;
                     } else {
                         // Space accessible but empty
                         bAccessible[i+1][j+1]++;
                     }
                     if (pPawns[i+1][j+1] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i+1][j+1], pText[pPawns[i+1][j+1]], i+1, j+1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i+1][j+1], pText[pPawns[i+1][j+1]], i+1, j+1);
                         cm[p][pPawns[i+1][j+1]] = 1;
                     }
                 }
             }
             /* WHITE PAWN */
             else if (p >= 17 && p <= 24) {
-                fprintf(stdout, "%d(%s) - White pawn in position %d:%d\n", p, pText[p], i, j);
+                if (globalArgs.verbose) fprintf(stdout, "%d(%s) - White pawn in position %d:%d\n", p, pText[p], i, j);
                 if (i-1 >= 0 && j-1 >=0) {
                     if (b[i-1][j-1] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i-1][j-1], pText[b[i-1][j-1]], i-1, j-1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i-1][j-1], pText[b[i-1][j-1]], i-1, j-1);
                         cm[p][b[i-1][j-1]] = 1;
                     } else {
                         // Space accessible but empty
                         wAccessible[i-1][j-1]++;
                     }
                     if (pPawns[i-1][j-1] != 0) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i-1][j-1], pText[pPawns[i-1][j-1]], i-1, j-1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i-1][j-1], pText[pPawns[i-1][j-1]], i-1, j-1);
                         cm[p][pPawns[i-1][j-1]] = 1;
                     }
                 }
                 if (i-1 >= 0 && j+1 < 8) {
                     if (b[i-1][j+1]) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i-1][j+1], pText[b[i-1][j+1]], i-1, j+1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[i-1][j+1], pText[b[i-1][j+1]], i-1, j+1);
                         cm[p][b[i-1][j+1]] = 1;
                     } else {
                         // Space accessible but empty
                         wAccessible[i-1][j+1]++;
                     }
                     if (pPawns[i-1][j+1]) {
-                        fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i-1][j+1], pText[pPawns[i-1][j+1]], i-1, j+1);
+                        if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", pPawns[i-1][j+1], pText[pPawns[i-1][j+1]], i-1, j+1);
                         cm[p][pPawns[i-1][j+1]] = 1;
                     }
                 }
@@ -626,7 +655,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
     p = 5;
     i = bKing[0];
     j = bKing[1];
-    fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
+    if (globalArgs.verbose) fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
     for (n = j-1; n <= j+1; n++) {
         for (m = i-1; m <= i+1; m++) {
             //fprintf(stdout, " KING: checking position %d:%d\n", m, n);
@@ -643,7 +672,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 continue;
             }
             if (b[m][n] != 0) {
-                fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                 cm[p][b[m][n]] = 1;
             }
             else {
@@ -659,7 +688,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
     is_check = 0;
     for (s = 17; s <= 32; s++) {
         if (cm[s][p]) {
-            fprintf(stdout, " King %d is under check by %d\n", p, s);
+            if (globalArgs.verbose) fprintf(stdout, " King %d is under check by %d\n", p, s);
             is_check = 1;
             break;
         }
@@ -682,7 +711,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
     p = 29;
     i = wKing[0];
     j = wKing[1];
-    fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
+    if (globalArgs.verbose) fprintf(stdout, "%d(%s) - King in position %d:%d\n", p, pText[p], i, j);
     for (n = j-1; n <= j+1; n++) {
         for (m = i-1; m <= i+1; m++) {
             //fprintf(stdout, " KING: checking position %d:%d\n", m, n);
@@ -699,7 +728,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
                 continue;
             }
             if (b[m][n] != 0) {
-                fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
+                if (globalArgs.verbose) fprintf(stdout, " Contact with %d(%s) in %d:%d\n", b[m][n], pText[b[m][n]], m, n);
                 cm[p][b[m][n]] = 1;
             }
             else {
@@ -715,7 +744,7 @@ void calcCM(int **cm, int **bAccessible, int **wAccessible, int **b, int sPawns[
     is_check = 0;
     for (s = 9; s <= 16; s++) {
         if (cm[p][s]) {
-            fprintf(stdout, " King %d is under check by %d\n", p, s);
+            if (globalArgs.verbose) fprintf(stdout, " King %d is under check by %d\n", p, s);
             is_check = 1;
             break;
         }
